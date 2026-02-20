@@ -1,4 +1,4 @@
-* map, reduct, and filter three important widgets in your multi-tool
+* map, reduce, and filter three important widgets in your multi-tool
 
 
 When you have a collection of things you're frequently going to want to do
