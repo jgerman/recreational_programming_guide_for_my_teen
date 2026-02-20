@@ -1,0 +1,8 @@
+# Recreational Programming Guide for my Teen
+
+
+Just a repo to hold "lessons" I'm giving my teen on how to solve problems with
+Racket. There might be some Clojure here too since I'm more familiar with it...
+
+This is very much a work in progress and mostly what comes up (or has come up)
+as we work though recreational coding challenges.

@@ -1,0 +1,199 @@
+* map, reduct, and filter three important widgets in your multi-tool
+
+
+When you have a collection of things you're frequently going to want to do
+something to it. You might have a list of coordinates, or of commands, or just
+of numbers (which might represent coordinates or commands). Your multi-tool
+comes with three key functions to manage these lists. All three look at each
+element in a given list but in very different ways.
+
+
+** map
+
+When you want to apply a function to every element of a list, map is your guy.
+Map is really easy to understand. Let's assume you have a map of numbers:
+
+#+begin_src racket
+'(1 2 3)
+#+end_src
+
+And you want to apply a function to each number, resulting in a new list. You'd
+accomplish that like this:
+
+#+begin_src racket
+  (map (lambda (x) (+ 1 x)) '(1 2 3))
+#+end_src
+
+#+RESULTS:
+: (2 3 4)
+
+In this case we're `mapping` the a function that adds one to a given number to
+the elements in the list. Which gives us a new list '(2 3 4).
+
+So `map` is a function that takes two arguments:
+
+   - a function that takes one argument
+   - a list
+
+In practice you'll find yourself knowing you want to do something to a list of
+values. Above we used an anonymous function as our argument to `map` and that's
+useful, but we also can pass it named functions. This happens frequently:
+
+#+begin_src racket
+  ;; First write the function that does the thing on a single value:
+  (define (do-the-thing x)
+    (+ 1 x))
+    ;; then apply that function to a list of those values
+    (map do-the-thing '(1 2 3))
+#+end_src
+
+#+RESULTS:
+: (2 3 4)
+
+We're using a simple function here that increments a number, but the function to
+be mapped can be whatever you like, it just has to take a single argument.
+
+Use `map` when: You have a collection of items and you want to call a given
+function on every element of that collection, returning a new collection.
+
+
+** filter
+
+`filter` let's you look at every item in a list and choose whether or not you
+want to keep it or not. Like `map` filter takes two arguments, a function (of
+one argument, and a list. In this case the function should be a predicate
+(though anything truthy works).
+
+Example:
+#+begin_src racket
+(filter even? '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+: (2 4)
+
+`filter` should be very easy to understand, every element that the predicate
+returns true for is kept in the new list, everything else is trashed.
+
+
+** reduce
+
+Reducers in racket come in two basic flavors: `foldl` and `foldr`. They differ
+in the order in which they apply their arguments, but for now we'll focus on
+`foldl` because it's more appropriate when reducing a list to a single value.
+
+Calls to foldl look like this:
+
+`(foldl (lambda (x acc) initial-acc xs))`
+
+Like `map` and `filter` the first argument to `foldl` is a function, unlike
+`map` and `filter` that function takes two arguments, a value (bound to x in
+this case) and an accumulator. You must also provide an initial value for the
+accumulator before providing the list of elements you want to operate on.
+
+You can think of the accumulator as state that foldl carries along with it as it
+looks at easch element in the list. Initial acc is just the value that is bound
+to acc when `foldl` looks at the first item in the list. Frequently the
+initial-acc is 0, or the equivalent "empty" value for whatever you're trying to
+build up with the function call.
+
+Example: Adding the numbers in a list
+
+Let's look at reducing a list down to a single value through addition:
+
+#+begin_src racket
+  (define my-numbers '(2 4 6 8))
+  (define (my-add x acc) (+ x acc))
+
+  (foldl my-add 0 my-numbers)
+#+end_src
+
+#+RESULTS:
+: 20
+
+It may seem silly to define my-add for this task but it's there to illustrate a
+point, calling `+` with two arguments is no different than `my-add`:
+
+#+begin_src racket
+  (define my-numbers '(2 4 6 8))
+
+  (foldl + 0 my-numbers)
+#+end_src
+
+#+RESULTS:
+: 20
+
+You can visualize the process like so:
+
+#+begin_src racket
+  (+ 2 0) ;; add the first element of the list, and the initial acc, returning 2... the new acc
+  (+ 4 2) ;; 4 is the second element of the list, acc is 2, and after this call it is 6
+  (+ 6 6) ;; 3rd element of the list, and the previous acc, new acc is 12
+  (+ 8 12) ;; 4th element of the list, after this we are finished so the return value is 20 (the result of this last call)
+#+end_src
+
+Of course your initial-acc can be whatever you want:
+
+#+begin_src racket
+  (define my-numbers '(2 4 6 8))
+
+  (foldl + 10 my-numbers)
+#+end_src
+
+#+RESULTS:
+: 30
+
+`foldl` is useful for building up any single value, including "modifying" an
+immutable value.
+
+When we use immutable data structures it's common to want to apply a list of
+operations to them. Since they're immutable we have to catch the new value that
+is returned, otherwise our change is lost. For example if we do the following:
+
+#+begin_src racket
+  (define my-set (set 1 5 21))
+  (set-add my-set 35)
+  (set-remove my-set 5)
+
+  my-set
+#+end_src
+
+#+RESULTS:
+: #<set: 1 5 21>
+
+What we get back is the original set, our set-add and set-remove technically
+happen but since nothing is "catching" the value it's lost.
+
+Instead we can use foldl:
+
+#+begin_src racket
+  (define my-set (set 1 5 21))
+
+  ;; let's define a function that takes a command, which is just a function, and
+  ;; applies it to its second argument: acc
+  (define (apply-command command acc)
+    (command acc))
+
+  ;; now let's define some commands to make it easy to follow what's happening
+  (define (add-35 s)
+    (set-add s 35))
+
+  (define (remove-5 s)
+    (set-remove s 5))
+
+
+  ;; we'll create a list of these commands note that in this case, where we're
+  ;; hard coding function names into a list we can't use quote to make the list,
+  ;; we must use the function `list`
+  (define commands (list add-35 remove-5))
+
+  ;; and now we'll use reduce to apply the commands to our initial set
+  (foldl apply-command my-set commands)
+#+end_src
+
+#+RESULTS:
+: #<set: 1 35 21>
+
+This is a contrived example, but it illustrates the point. If you need to do a
+sequence of `things` to an immutable data structure, `foldl` can help. The
+lesson on recursion will have more details.
