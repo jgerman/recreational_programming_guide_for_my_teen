@@ -1,0 +1,409 @@
+#+title:      Lesson — setting up Java for AP CSA with VS Code
+#+date:       [2026-06-17 Wed 08:17]
+#+filetags:   :lesson:java:jdk:vscode:sam:apcsa:windows:
+
+Parent: [[denote:20260613T220841][Summer CS projects for AP CSA and game programming]]
+(this lesson is referenced from /Side quests, Lane 1, J0/.)
+
+* What this is
+
+A teaching walkthrough for getting Java running on Sam's Windows
+machine with VS Code as the editor, ready for the Lane 1 side quests
+and AP CSA. Assumes you already have:
+
+- VS Code installed (you used it for the Unity ~.gitignore~ step, so
+  this is already true).
+- A folder where you want your Java practice code to live (suggested:
+  ~C:\Code\java\~ — same ~C:\Code\~ root your Unity project lives in,
+  away from OneDrive).
+
+By the end of this lesson you'll have:
+
+- Microsoft Build of OpenJDK 21 installed and working from
+  PowerShell.
+- VS Code's /Extension Pack for Java/ installed and pointed at the
+  JDK.
+- A "Hello, World" Java program that compiles and runs from VS Code's
+  Run button.
+- A folder layout you can keep adding side-quest programs to.
+
+Estimated time: 45-60 minutes the first time. After that, starting a
+new side quest is a /New File/ away.
+
+* Why Java, and which Java
+
+AP CSA is a Java-only exam, so even though most of your day will be in
+C# (Unity) and Python, Java is the language you'll be tested on next
+spring. Getting a working Java setup /now/ — well before the school
+year — means the language stops being a hurdle, and you can focus on
+the actual content (classes, inheritance, recursion, etc.) when school
+starts.
+
+** Which JDK to install
+
+Java is a /language/; a /JDK/ (Java Development Kit) is the actual
+software you install that knows how to compile and run Java code.
+Multiple vendors ship JDKs — they're nearly identical for our
+purposes, since they're all built from the same open-source codebase
+(OpenJDK).
+
+Pick *Microsoft Build of OpenJDK*. Reasons specific to this setup:
+
+- /First-party for VS Code./ Microsoft builds both VS Code and this
+  JDK; the integration is the smoothest of any combination.
+- /Free, no account, no license confusion./ Same permissive license as
+  upstream OpenJDK. Oracle's own JDK has a more complicated license
+  for commercial use; Microsoft's sidesteps that entirely.
+- /Installer handles PATH and JAVA_HOME for you./ The Windows
+  installer offers checkboxes to set both, which is the source of 80%
+  of "I installed Java but it doesn't work" problems on other
+  vendors.
+- /Same OpenJDK source as Temurin, Corretto, Zulu, etc./ So there's no
+  compatibility trade-off — you're picking the smoothest installer
+  for Sam's machine, not a different Java.
+
+** Which version
+
+Pick *Microsoft Build of OpenJDK 21 LTS*. Reasons:
+
+- /LTS/ (Long-Term Support) — security updates for years. Non-LTS
+  releases come out every 6 months and stop getting updates fast.
+  Always pick LTS for learning.
+- /21 is what AP CSA accepts./ The exam runs on Java 8+ language
+  features; 21 covers everything.
+- /Not 25./ Java 25 LTS exists (shipped September 2025) but 21 is the
+  more road-tested pick for AP CSA prep.
+
+* Concepts in 60 seconds
+
+You'll see these words constantly. Quick definitions before the
+hands-on:
+
+- /JDK/ (Java Development Kit): the full toolkit — compiler, runtime,
+  libraries, debugger. You need this for /writing/ Java.
+- /JRE/ (Java Runtime Environment): a subset of the JDK that can only
+  /run/ Java code, not compile it. You don't need a separate JRE; the
+  JDK includes one. If a website offers you "JRE or JDK?" — pick JDK.
+- ~javac~ (pronounced "java-see"): the Java /compiler/. Takes
+  ~Foo.java~ and produces ~Foo.class~ (compiled bytecode).
+- ~java~: the Java /runner/. Executes a ~.class~ file.
+- ~.java~ file: Java source code, the file you write.
+- ~.class~ file: compiled Java bytecode, what the runtime actually
+  executes. You don't read these.
+- /Class/: the basic unit of Java code. Every Java program is built
+  from classes. (AP CSA: this is /the/ central concept.)
+- /Main method/: ~public static void main(String[] args)~ — the
+  entry point every Java program needs. Memorize the shape; you'll
+  type it thousands of times.
+- ~JAVA_HOME~: a Windows environment variable that points at the JDK
+  install folder. VS Code's Java extension reads it to find Java.
+- ~PATH~: the list of folders Windows searches when you type a
+  command. ~java~ and ~javac~ have to be on it for the command line
+  to find them.
+
+* Setting up: step by step
+
+** Step 1 — Check what Java (if any) is already installed
+
+Before installing, see what's already there. Open /PowerShell/ (Start
+menu → type ~powershell~ → Enter) and run:
+
+#+begin_src powershell
+java -version
+javac -version
+#+end_src
+
+Possible outputs:
+
+- /"The term 'java' is not recognized..."/ — nothing installed. Good;
+  go to Step 2.
+- /A version line starting with anything less than ~21~/ — something
+  is installed but it's old. Treat as "not what we want" and continue
+  to Step 2. The new install will become the default.
+- /A version line starting with ~21~ or higher/ — you already have a
+  recent JDK. Skip to Step 3 (VS Code extension).
+
+** Step 2 — Install Microsoft Build of OpenJDK 21
+
+*** Download
+
+1. In a browser, open
+   https://learn.microsoft.com/java/openjdk/download
+2. Find the row for /Microsoft Build of OpenJDK 21 LTS/.
+3. Pick the *Windows* column.
+4. Pick the architecture:
+   - /x64/ for almost every Windows machine (Intel or AMD CPU).
+   - /aarch64/ only if it's an ARM Windows machine (Surface Pro X,
+     some newer laptops). Rare — if unsure, x64.
+5. Download the *.msi* installer (not the .zip — the .msi handles
+   PATH and JAVA_HOME for you; the .zip doesn't).
+
+*** Install
+
+1. Double-click the ~.msi~ file. Standard Windows installer flow.
+2. /Critical step:/ on the /Custom Setup/ screen, expand the feature
+   tree and make sure these are set to "Will be installed on local
+   hard drive":
+   - /Set JAVA_HOME environment variable/ (defaults to off on some
+     versions — *flip it on*).
+   - /Add to PATH/ (usually on by default; leave it).
+   Without these two, the rest of the lesson fails in confusing ways.
+3. Finish the installer.
+4. /Close all PowerShell windows/ and open a fresh one. Existing
+   windows won't pick up the new ~PATH~ and ~JAVA_HOME~.
+5. Verify:
+   #+begin_src powershell
+   java -version
+   javac -version
+   $env:JAVA_HOME
+   #+end_src
+   - ~java -version~ should report ~openjdk 21~ or similar.
+   - ~javac -version~ should report ~javac 21~ or similar.
+   - ~$env:JAVA_HOME~ should print the install path (something like
+     ~C:\Program Files\Microsoft\jdk-21.x.x-hotspot~).
+   If any of those fail, see /Common mistakes/ below.
+
+*** What you just did
+
+You installed a working Java compiler and runtime that any program on
+your machine can find. ~javac~ turns ~.java~ files into ~.class~
+files; ~java~ runs them. The next steps wire this up to VS Code so
+you don't have to type those commands by hand.
+
+** Step 3 — Install the Extension Pack for Java in VS Code
+
+1. Open VS Code.
+2. Click the /Extensions/ icon in the left sidebar (square-of-squares,
+   keyboard: Ctrl+Shift+X).
+3. In the search box, type ~Extension Pack for Java~.
+4. The top result should be /"Extension Pack for Java"/ by
+   *Microsoft*. (Check the publisher — there are knockoffs.)
+5. Click /Install/.
+
+What this installs (a bundle of six extensions):
+
+- /Language Support for Java/ — syntax highlighting, autocomplete,
+  errors, refactoring.
+- /Debugger for Java/ — set breakpoints, step through code.
+- /Test Runner for Java/ — for JUnit tests (later, not now).
+- /Maven for Java/ — for Maven projects (later, not now).
+- /Project Manager for Java/ — manages Java projects.
+- /IntelliCode/ — AI-assisted autocomplete.
+
+After install, VS Code will show a notification or status-bar message
+mentioning Java. If it says "Java runtime configured" or shows the
+JDK 21 path — great. If it says it can't find Java, see /Common
+mistakes → VS Code can't find the JDK/ below.
+
+** Step 4 — Make a Java practice folder
+
+The simplest layout that scales as you do more side quests:
+
+#+begin_example
+C:\Code\java\              ← top-level folder for all Java practice
+  HelloWorld\              ← one folder per side quest
+    HelloWorld.java
+  DiceRoller\              ← when you do J1
+    DiceRoller.java
+  ...
+#+end_example
+
+In PowerShell:
+#+begin_src powershell
+mkdir C:\Code\java\HelloWorld
+#+end_src
+
+(One folder per side quest, not one giant folder of files, because
+Java is picky about file names matching class names — keeping each
+project isolated avoids name collisions.)
+
+** Step 5 — Hello, World
+
+1. In VS Code: File → Open Folder → select ~C:\Code\java\HelloWorld\~.
+2. Right-click in the Explorer panel on the left → /New File/.
+3. Name it /exactly/ ~HelloWorld.java~. The filename /must/ match the
+   class name, including capitalization. (~helloworld.java~ won't
+   work; ~HelloWorld.JAVA~ won't work.)
+4. Paste this in:
+
+   #+begin_src java
+   public class HelloWorld {
+       public static void main(String[] args) {
+           System.out.println("Hello, World!");
+       }
+   }
+   #+end_src
+
+5. Save (Ctrl+S).
+6. VS Code's Java extension will start a build automatically. The
+   status bar at the bottom briefly shows a spinner. If you see red
+   error squigglies, check /Common mistakes/ below.
+7. Above the ~main~ method, two small clickable links appear:
+   */Run/* and */Debug/*. Click /Run/.
+8. The terminal opens at the bottom of VS Code and prints:
+   #+begin_example
+   Hello, World!
+   #+end_example
+
+That's it — Java is working. Every side quest from here is just
+"replace the contents of ~main~ with new code, click Run."
+
+** Step 6 — Try it from the command line too
+
+So the magic isn't entirely hidden behind VS Code's Run button. In
+PowerShell, in the ~HelloWorld~ folder:
+
+#+begin_src powershell
+cd C:\Code\java\HelloWorld
+javac HelloWorld.java       # compile  → produces HelloWorld.class
+java HelloWorld             # run      → prints "Hello, World!"
+                            # (NB: no .class on the run command)
+#+end_src
+
+Same result. VS Code's Run button is doing exactly this for you, plus
+managing output paths and classpaths.
+
+* Daily workflow
+
+Java doesn't have a daily ritual the way git does. Two habits are
+worth building though:
+
+** One folder per program
+
+Make a new folder under ~C:\Code\java\~ for each side quest.
+~HelloWorld\~, ~DiceRoller\~, ~MonsterFight\~. Each has its own
+~.java~ file (or two or three). Don't dump everything into one
+folder.
+
+** Filename matches class name. Exactly.
+
+If your file is ~Goblin.java~, the class declared inside is
+~public class Goblin~. Match capitalization. If you rename the class,
+rename the file. VS Code will sometimes prompt to do this rename for
+you — say yes.
+
+The /one/ Java rule worth memorizing on Day 1.
+
+* Common mistakes and how to fix them
+
+** "VS Code can't find the JDK"
+
+Symptoms (any of):
+
+- VS Code shows a notification: "Java extension cannot find a JDK".
+- Red squigglies under ~System~, ~String~, etc. in your code, with
+  hover tooltips like "Unresolved type".
+- The /Run/ and /Debug/ links don't appear above ~main~.
+
+*Diagnose:* run ~java -version~ and ~javac -version~ in a fresh
+PowerShell window. If those work, the JDK is installed and the issue
+is VS Code not seeing it.
+
+*Fix:*
+
+1. Quit VS Code completely (close all windows).
+2. Reopen it. Most of the time this is enough — VS Code reads
+   ~PATH~ on launch only.
+3. If still not working: check ~JAVA_HOME~ in PowerShell:
+   #+begin_src powershell
+   $env:JAVA_HOME
+   #+end_src
+   If empty, the installer's "Set JAVA_HOME" option wasn't selected.
+   Easiest fix: re-run the Microsoft OpenJDK installer; on the
+   Custom Setup screen, enable /Set JAVA_HOME environment variable/.
+   Restart PowerShell and VS Code.
+4. If ~JAVA_HOME~ is set but VS Code still complains: open VS Code
+   settings (Ctrl+,), search for ~java.jdt.ls.java.home~, and set
+   it to the value of ~$env:JAVA_HOME~ (the JDK install path).
+
+** "Filename does not match class name"
+
+Symptoms: red squiggly on the ~class~ line with /"The public type
+Goblin must be defined in its own file."/
+
+*Cause:* the file is named ~goblin.java~ (or ~Goblin.txt~, or
+~Goblin.JAVA~) and the class inside is ~public class Goblin~. Java is
+strict: file = ~Goblin.java~ exactly.
+
+*Fix:* rename the file. In VS Code's Explorer, right-click → Rename,
+type the correct name. (Case matters here even though Windows's
+filesystem is usually case-insensitive — Java enforces the match.)
+
+*Prevent it next time:* turn on file extensions in File Explorer (View
+tab → check /File name extensions/). Then ~.java~ at the end of the
+filename is visible and you won't accidentally save a
+~Goblin.java.txt~.
+
+** "Multiple Java versions and the wrong one keeps getting picked"
+
+Symptoms: ~java -version~ reports something old (Java 8, Java 11)
+even after installing Microsoft OpenJDK 21.
+
+*Diagnose:* the issue is usually ~PATH~ order. In PowerShell:
+#+begin_src powershell
+$env:PATH -split ';' | Select-String -Pattern 'java|jdk'
+#+end_src
+
+That lists every JDK-looking entry in PATH, in the order they're
+searched. The /first/ match wins. If an older JDK appears before
+Microsoft OpenJDK 21, edit your PATH:
+
+1. Press Win → type ~environment variables~ → click /Edit the system
+   environment variables/.
+2. Click /Environment Variables.../ at the bottom of the dialog.
+3. Under /User variables/, find ~Path~ → /Edit/.
+4. Find the Microsoft OpenJDK ~bin~ entry. Click /Move Up/ until it's
+   above the old JDK's ~bin~ entry.
+5. OK out. Close PowerShell. Open a fresh PowerShell window.
+
+You can also remove the old JDK entirely (Settings → Apps → search
+"java" or the old JDK name → Uninstall) if it's not used for anything
+else.
+
+** "I get a Hello, World output, but a 'bin' folder appeared I didn't make"
+
+That's VS Code's build output folder — normal. The Java extension
+creates ~bin\~ inside your project folder to hold the compiled
+~.class~ files, keeping them separate from your ~.java~ source.
+Ignore the folder; if you ever git-track Java code, add ~bin\~ to
+~.gitignore~.
+
+** "I installed Java but ~javac~ is missing"
+
+Symptom: ~java -version~ works, but ~javac -version~ says "not
+recognized."
+
+*Cause:* you installed a JRE, not the JDK. The JRE only runs Java; it
+can't compile.
+
+*Fix:* go back to https://learn.microsoft.com/java/openjdk/download
+and download *Microsoft Build of OpenJDK* (the JDK). Install it.
+~javac~ will appear.
+
+** "VS Code's autocomplete is sluggish or wrong"
+
+The Java extension does a lot of background indexing the first time
+a project opens. Give it ~30 seconds; it caches after that and starts
+fast.
+
+If it stays slow: Command Palette (Ctrl+Shift+P) → type ~Java: Clean
+Java Language Server Workspace~ → Enter. Rebuilds the index from
+scratch.
+
+* Resources
+
+- /Microsoft Build of OpenJDK (download)./
+  https://learn.microsoft.com/java/openjdk/download
+- /VS Code Java docs/ (official, well-written):
+  https://code.visualstudio.com/docs/languages/java
+- /Java tutorial — Oracle/ (the canonical introductory tutorial,
+  free):
+  https://docs.oracle.com/javase/tutorial/
+- /AP CSA exam page/ (what the exam actually tests):
+  https://apstudents.collegeboard.org/courses/ap-computer-science-a
+- /Coding with John — Java tutorials/ (YouTube, AP CSA level, clear
+  delivery):
+  https://www.youtube.com/@CodingWithJohn
+- /Bro Code — Java full course for beginners/ (one long YouTube
+  video, good for picking up syntax fast):
+  https://www.youtube.com/@BroCodez
